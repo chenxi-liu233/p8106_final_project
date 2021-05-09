@@ -139,9 +139,9 @@ y_te <- heart_te$ten_year_chd
 ## Model fitting
 Training control.
 ```{r}
-ctrl <- trainControl(method = "repeatedcv",
-                     summaryFunction = twoClassSummary,
-                     classProbs = TRUE)
+ctrl <- trainControl(method = "cv",
+                     classProbs = TRUE, 
+                     summaryFunction = twoClassSummary)
 ```
 
 Logistic regression.
@@ -256,10 +256,6 @@ model.qda
 
 Support vector classifier (linear kernel)
 ```{r}
-ctrl <- trainControl(method = "repeatedcv",
-                     summaryFunction = twoClassSummary,
-                     classProbs = TRUE)
-ctrl <- trainControl(method = "cv")
 
 # kernlab
 set.seed(1)
@@ -286,17 +282,13 @@ confusionMatrix(data = pred.linear.te,
 Classification tree
 
 ```{r}
-ctrl_2 <- trainControl(method = "cv",
-                     classProbs = TRUE, 
-                     summaryFunction = twoClassSummary)
-
 set.seed(1)
 
 rpart.fit2 = train(ten_year_chd ~ . ,
                    heart_tr,
                    method = "rpart",
                    tuneGrid = data.frame(cp = exp(seq(-10,-5, len = 80))),
-                   trControl = ctrl_2,
+                   trControl = ctrl,
                    metric = "ROC")
 
 ggplot(rpart.fit2, highlight = TRUE)
@@ -322,7 +314,7 @@ rf.fit2 <- train(ten_year_chd ~ . ,
                  tuneGrid = rf.grid2, 
                  metric = "ROC", 
                  importance = "impurity",
-                 trControl = ctrl_2)
+                 trControl = ctrl)
 
 ggplot(rf.fit2, highlight = TRUE)
 
@@ -337,6 +329,7 @@ error_rate2
 Test error rate is `r error_rate2`. 
 
 Boosting
+
 ```{r}
 gbmA.grid <- expand.grid(n.trees = c(2000,3000,4000),
                          interaction.depth = 1:6,
@@ -346,7 +339,7 @@ set.seed(1)
 gbmA.fit <- train(ten_year_chd ~ . , 
                   heart_tr, 
                   tuneGrid = gbmA.grid,
-                  trControl = ctrl_2,
+                  trControl = ctrl,
                   method = "gbm",
                   distribution = "adaboost",
                   metric = "ROC",
@@ -361,7 +354,9 @@ error_rate3
 ```
 
 Test error rate is `r error_rate3`. 
-----------------------------------------------------------------------------------------
+
+Model Selection
+
 ```{r}
 res <- resamples(list(GLM = model.glm, 
                       GLMNET = model.glmn, 
@@ -369,7 +364,10 @@ res <- resamples(list(GLM = model.glm,
                       MARS = model.mars,
                       KNN = model.knn,
                       LDA = model.lda,
-                      QDA = model.qda))
+                      QDA = model.qda,
+                      Classification_tree = rpart.fit2,
+                      Random_forest = rf.fit2,
+                      Boosting = gbmA.fit))
 summary(res)
 
 bwplot(res, metric = "ROC")
