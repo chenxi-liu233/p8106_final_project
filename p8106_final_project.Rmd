@@ -308,14 +308,59 @@ error_rate = 1 - confusion_matrix$overall[[1]]
 error_rate
 ```
 
-random forest
+Test error rate is `r error_rate`. 
+
+Random Forest
 
 ```{r}
+rf.grid2 = expand.grid(mtry = 1:15, splitrule = "gini",
+                       min.node.size = seq(from = 2, to = 10, by = 2))
+set.seed(1)
+rf.fit2 <- train(ten_year_chd ~ . ,
+                 heart_tr,
+                 method = "ranger", 
+                 tuneGrid = rf.grid2, 
+                 metric = "ROC", 
+                 importance = "impurity",
+                 trControl = ctrl_2)
 
+ggplot(rf.fit2, highlight = TRUE)
+
+plot(varImp(rf.fit2))
+
+rf.pred2 = predict(rf.fit2, newdata = heart_te, type = "raw")
+confusion_matrix2 = confusionMatrix(rf.pred2, y_te) 
+error_rate2 = 1 - confusion_matrix2$overall[[1]]
+error_rate2
 ```
 
+Test error rate is `r error_rate2`. 
 
+Boosting
+```{r}
+gbmA.grid <- expand.grid(n.trees = c(2000,3000,4000),
+                         interaction.depth = 1:6,
+                         shrinkage = c(0.001,0.003,0.005),
+                         n.minobsinnode = 1)
+set.seed(1)
+gbmA.fit <- train(ten_year_chd ~ . , 
+                  heart_tr, 
+                  tuneGrid = gbmA.grid,
+                  trControl = ctrl_2,
+                  method = "gbm",
+                  distribution = "adaboost",
+                  metric = "ROC",
+                  verbose = FALSE)
 
+summary(gbmA.fit$finalModel, las = 2, cBars = 19, cex.names = 0.6)
+
+boost.pred2 = predict(gbmA.fit, newdata = heart_te, type = "raw")
+confusion_matrix3 = confusionMatrix(boost.pred2, y_te) 
+error_rate3 = 1 - confusion_matrix3$overall[[1]]
+error_rate3
+```
+
+Test error rate is `r error_rate3`. 
 ----------------------------------------------------------------------------------------
 ```{r}
 res <- resamples(list(GLM = model.glm, 
