@@ -20,6 +20,7 @@ library(AppliedPredictiveModeling)
 library(miscset)
 library(corrplot)
 library(rpart.plot) 
+library(gplots)
 ```
 
 ```{r setup, include=FALSE}
@@ -109,6 +110,10 @@ heart_con_long %>%
 ```
 
 ```{r warning = F}
+```
+
+
+```{r warning = F}
 # bar plots for categorical variables
 heart_categorical = heart_eda %>%
   dplyr::select(male, education, current_smoker, bp_meds, prevalent_stroke, 
@@ -122,6 +127,22 @@ heart_cate_long %>%
   labs(x = "Categorical variables", y = "Proportion") +
   facet_wrap(~variable, scales = "free", nrow = 2)
 ```
+
+Heatmap 
+
+```{r}
+#col1 <- colorRampPalette(brewer.pal(9, "GnBu"))(100)
+#col2 <- colorRampPalette(brewer.pal(3, "Spectral"))(2)
+
+#heatmap.2(t(heart), 
+#          col = col1, keysize=.8, key.par = list(cex=.5),
+#          trace = "none", key = TRUE, cexCol = 0.75, 
+#          labCol = as.character(heart[,1]),
+#          ColSideColors = col2[as.numeric(unlist(heart[,"ten_year_chd"]))+1],
+#          margins = c(10, 10))
+
+```
+
 
 # Data partition
 ```{r}
