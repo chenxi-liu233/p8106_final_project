@@ -19,6 +19,7 @@ library(vip)
 library(AppliedPredictiveModeling)
 library(miscset)
 library(corrplot)
+library(rpart.plot) 
 ```
 
 ```{r setup, include=FALSE}
@@ -282,6 +283,36 @@ confusionMatrix(data = pred.linear.te,
 1-0.8444
 ```
 
+Classification tree
+
+```{r}
+ctrl_2 <- trainControl(method = "cv",
+                     classProbs = TRUE, 
+                     summaryFunction = twoClassSummary)
+
+set.seed(1)
+
+rpart.fit2 = train(ten_year_chd ~ . ,
+                   heart_tr,
+                   method = "rpart",
+                   tuneGrid = data.frame(cp = exp(seq(-10,-5, len = 80))),
+                   trControl = ctrl_2,
+                   metric = "ROC")
+
+ggplot(rpart.fit2, highlight = TRUE)
+rpart.plot(rpart.fit2$finalModel)
+
+rpart.pred2 = predict(rpart.fit2, newdata = heart_te, type = "raw")
+confusion_matrix = confusionMatrix(rpart.pred2, y_te) 
+error_rate = 1 - confusion_matrix$overall[[1]]
+error_rate
+```
+
+random forest
+
+```{r}
+
+```
 
 
 
