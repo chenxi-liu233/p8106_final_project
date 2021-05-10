@@ -21,6 +21,7 @@ library(miscset)
 library(corrplot)
 library(rpart.plot) 
 library(gplots)
+library(DALEX)
 ```
 
 ```{r setup, include=FALSE}
@@ -277,28 +278,55 @@ model.qda
 
 Support vector classifier (linear kernel)
 ```{r}
-
 # kernlab
 set.seed(1)
 svml.fit <- train(ten_year_chd ~ . , 
                   data = heart_tr, 
                   method = "svmLinear",
-                  # preProcess = c("center", "scale"),
-                  tuneGrid = data.frame(C = exp(seq(-2,5,len=20))),
+                  #tuneGrid = data.frame(C = exp(seq(-2,1.5,len=5))),
+                  #tuneGrid = data.frame(C = exp(seq(1.5,5,len=5))),
+                  tuneGrid = data.frame(C = exp(seq(-2,5,len=5))),
                   trControl = ctrl)
 
 plot(svml.fit, highlight = TRUE, xTrans = log)
 
 # training error
 confusionMatrix(svml.fit)
-1-0.83
+#0.8506
 
 # test error
-pred.linear.te <- predict(svml.fit, newdata = dat[-rowTrain,])
+pred.linear.te <- predict(svml.fit, newdata = heart_te)
 confusionMatrix(data = pred.linear.te, 
-                reference = dat$purchase[-rowTrain])
-1-0.8444
+                reference = y_te)
+#0.8514
 ```
+
+
+Support vector classifier (radial kernel)
+```{r}
+svmr.grid <- expand.grid(C = exp(seq(-1,4,len=10)),
+                         sigma = exp(seq(-8,0,len=10)))
+
+# tunes over both cost and sigma
+set.seed(1)             
+svmr.fit <- train(ten_year_chd ~ . , 
+                  data = heart_tr, 
+                  method = "svmRadialSigma",
+                  preProcess = c("center", "scale"),
+                  tuneGrid = svmr.grid,
+                  trControl = ctrl)
+
+plot(svmr.fit, highlight = TRUE)
+
+# training error
+confusionMatrix(svmr.fit)
+
+# test error
+pred.radial.te <- predict(svmr.fit, newdata = heart_te)
+confusionMatrix(data = pred.radial.te, 
+                reference = y_te)
+```
+
 
 Classification tree
 
@@ -386,6 +414,8 @@ res <- resamples(list(GLM = model.glm,
                       KNN = model.knn,
                       LDA = model.lda,
                       QDA = model.qda,
+                      SVM_linear = svml.fit,
+                      SVM_radial = svmr.fit,
                       Classification_tree = rpart.fit2,
                       Random_forest = rf.fit2,
                       Boosting = gbmA.fit))
@@ -394,8 +424,74 @@ summary(res)
 bwplot(res, metric = "ROC")
 ```
 
+Model Interpretation
+
+Final Model is boosting
+
+```{r}
+pdp.gbm <- gbmA.fit %>% 
+            partial(pred.var = "age",
+                    grid.resolution = 100,
+                    prob = TRUE) %>% 
+            autoplot(rug = TRUE, train = heart_tr) +
+            ggtitle("Partial Dependence on Age (Boosting Model)")
+
+grid.arrange(pdp.gbm, nrow = 1)
+
+pdp.gbm2 <- gbmA.fit %>% 
+            partial(pred.var = "sys_bp",
+                    grid.resolution = 100,
+                    prob = TRUE) %>% 
+            autoplot(rug = TRUE, train = heart_tr) +
+            ggtitle("Partial Dependence on Systolic blood pressure (Boosting Model)") +
+            labs(x = "Systolic blood pressure")
+
+grid.arrange(pdp.gbm2, nrow = 1)
+
+pdp.gbm3 <- gbmA.fit %>% 
+            partial(pred.var = "glucose",
+                    grid.resolution = 100,
+                    prob = TRUE) %>% 
+            autoplot(rug = TRUE, train = heart_tr) +
+            ggtitle("Partial Dependence on glucose (Boosting Model)")
+
+grid.arrange(pdp.gbm3, nrow = 1)
+
+pdp.gbm4 <- gbmA.fit %>% 
+            partial(pred.var = "cigs_per_day",
+                    grid.resolution = 100,
+                    prob = TRUE) %>% 
+            autoplot(rug = TRUE, train = heart_tr) +
+            ggtitle("Partial Dependence on cigarette per day (Boosting Model)")+
+            labs(x = "Cigarette per day")
+
+grid.arrange(pdp.gbm4, nrow = 1)
+
+
+pdp.gbm5 <- gbmA.fit %>% 
+            partial(pred.var = "tot_chol",
+                    grid.resolution = 100,
+                    prob = TRUE) %>% 
+            autoplot(rug = TRUE, train = heart_tr) +
+            ggtitle("Partial Dependence on Cholesterol Level (Boosting Model)") +
+            labs(x = "Cholesterol Level")
+
+grid.arrange(pdp.gbm5, nrow = 1)
+
+pdp.gbm6 <- gbmA.fit %>% 
+            partial(pred.var = "dia_bp",
+                    grid.resolution = 100,
+                    prob = TRUE) %>% 
+            autoplot(rug = TRUE, train = heart_tr) +
+            ggtitle("Partial Dependence on Diastolic blood pressure  (Boosting Model)") +
+            labs(x = "Diastolic blood pressure ")
+
+grid.arrange(pdp.gbm6, nrow = 1)
+```
+
 
 Now let's look at the test data performance.
+
 ```{r, warning=FALSE}
 glm.pred <- predict(model.glm, newdata = x_te, type = "prob")[,2]
 glmn.pred <- predict(model.glmn, newdata = x_te, type = "prob")[,2]
@@ -404,7 +500,11 @@ gam.pred <- predict(model.gam, newdata = x_te, type = "prob")[,2]
 mars.pred <- predict(model.mars, newdata = x_te, type = "prob")[,2]
 lda.pred <- predict(model.lda, newdata = x_te, type = "prob")[,2]
 qda.pred <- predict(model.qda, newdata = x_te, type = "prob")[,2]
-
+svml.pred <- predict(svml.fit, newdata = heart_te, type = "prob")[,2]
+svmr.pred <- predict(svmr.fit, newdata = heart_te, type = "prob")[,2]
+classification.tree.pred <- predict(rpart.fit2, newdata = heart_te, type = "prob")[,2]
+rf.pred <- predict(rf.fit2, newdata = heart_te, type = "prob")[,2]
+boosting.pred <- predict(gbmA.fit, newdata = heart_te, type = "prob")[,2]
 
 roc.glm <- roc(y_te, glm.pred)
 roc.glmn <- roc(y_te, glmn.pred)
@@ -413,10 +513,16 @@ roc.gam <- roc(y_te, gam.pred)
 roc.mars <- roc(y_te, mars.pred)
 roc.lda <- roc(y_te, lda.pred)
 roc.qda <- roc(y_te, qda.pred)
+roc.svml <- roc(y_te, svml.pred)
+roc.svmr <- roc(y_te, svmr.pred)
+roc.classification.tree <- roc(y_te, classification.tree.pred)
+roc.rf <- roc(y_te, rf.pred)
+roc.boosting <- roc(y_te, boosting.pred)
 
 auc <- c(roc.glm$auc[1], roc.glmn$auc[1], roc.knn$auc[1],
          roc.gam$auc[1], roc.mars$auc[1], roc.lda$auc[1],
-         roc.qda$auc[1])
+         roc.qda$auc[1], roc.svml$auc[1], roc.svmr$auc[1],
+         roc.classification.tree$auc[1], roc.rf$auc[1], roc.boosting$auc[1])
 
 plot(roc.glm, legacy.axes = TRUE)
 plot(roc.glmn, col = 2, add = TRUE)
@@ -425,8 +531,13 @@ plot(roc.gam, col = 4, add = TRUE)
 plot(roc.mars, col = 5, add = TRUE)
 plot(roc.lda, col = 6, add = TRUE)
 plot(roc.qda, col = 7, add = TRUE)
+plot(roc.svml, col = 8, add = TRUE)
+plot(roc.svmr, col = 9, add = TRUE)
+plot(roc.classification.tree, col = 10, add = TRUE)
+plot(roc.rf, col = 11, add = TRUE)
+plot(roc.boosting, col = 12, add = TRUE)
 
-modelNames <- c("glm","glmn","knn","gam","mars","lda","qda")
+modelNames <- c("glm","glmn","knn","gam","mars","lda","qda","svm (linear kernel)", "svm (radial kernel)", "classification tree", "random forest", "boosting")
 legend("bottomright", legend = paste0(modelNames, ": ", round(auc,3)),
-       col = 1:7, lwd = 2)
+       col = 1:12, lwd = 2)
 ```
