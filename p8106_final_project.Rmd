@@ -74,15 +74,6 @@ vis_miss(heart)
 skimr::skim_without_charts(heart)
 ```
 
-```{r}
-featurePlot(x = heart[, c(2,3,5,10,11,12,13,14,15)],
-            y = heart$ten_year_chd, scales = list(x=list(relation="free"),
-                                               y=list(relation="free")),
-            plot = "density",
-            pch = "|",
-            auto.key = list(columns = 4))
-```
-
 Visualization of variables
 ```{r}
 heart_eda = heart %>%
@@ -109,10 +100,6 @@ heart_con_long %>%
   labs(x = "Continuous variables", y = "Density") +
   facet_wrap(~variable, scales = "free", nrow = 2)
 ```
-
-```{r warning = F}
-```
-
 
 ```{r warning = F}
 # bar plots for categorical variables
@@ -144,7 +131,6 @@ Heatmap
 
 ```
 
-
 # Data partition
 ```{r}
 indexTrain <- createDataPartition(y = heart$ten_year_chd, p = 0.75, list = FALSE)
@@ -167,6 +153,7 @@ ctrl <- trainControl(method = "cv",
 ```
 
 Logistic regression.
+
 ```{r}
 set.seed(1)
 model.glm <- train(x = x_tr,
@@ -250,8 +237,8 @@ model.knn$bestTune
 summary(model.knn)
 ```
 
-
 LDA.
+
 ```{r}
 set.seed(1)
 model.lda <- train(x = x_tr,
@@ -264,6 +251,7 @@ model.lda
 ```
 
 QDA
+
 ```{r}
 set.seed(1)
 model.qda <- train(x = x_tr,
@@ -275,8 +263,8 @@ model.qda <- train(x = x_tr,
 model.qda
 ```
 
-
 Support vector classifier (linear kernel)
+
 ```{r}
 # kernlab
 set.seed(1)
