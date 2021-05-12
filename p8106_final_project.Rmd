@@ -420,7 +420,8 @@ Final Model is boosting
 pdp.gbm <- gbmA.fit %>% 
             partial(pred.var = "age",
                     grid.resolution = 100,
-                    prob = TRUE) %>% 
+                    prob = TRUE,
+                    which.class = "yes") %>% 
             autoplot(rug = TRUE, train = heart_tr) +
             ggtitle("Partial Dependence on Age (Boosting Model)")
 
@@ -429,7 +430,8 @@ grid.arrange(pdp.gbm, nrow = 1)
 pdp.gbm2 <- gbmA.fit %>% 
             partial(pred.var = "sys_bp",
                     grid.resolution = 100,
-                    prob = TRUE) %>% 
+                    prob = TRUE,
+                    which.class = "yes") %>% 
             autoplot(rug = TRUE, train = heart_tr) +
             ggtitle("Partial Dependence on Systolic blood pressure (Boosting Model)") +
             labs(x = "Systolic blood pressure")
@@ -439,7 +441,8 @@ grid.arrange(pdp.gbm2, nrow = 1)
 pdp.gbm3 <- gbmA.fit %>% 
             partial(pred.var = "glucose",
                     grid.resolution = 100,
-                    prob = TRUE) %>% 
+                    prob = TRUE,
+                    which.class = "yes") %>% 
             autoplot(rug = TRUE, train = heart_tr) +
             ggtitle("Partial Dependence on glucose (Boosting Model)")
 
@@ -448,7 +451,8 @@ grid.arrange(pdp.gbm3, nrow = 1)
 pdp.gbm4 <- gbmA.fit %>% 
             partial(pred.var = "cigs_per_day",
                     grid.resolution = 100,
-                    prob = TRUE) %>% 
+                    prob = TRUE,
+                    which.class = "yes") %>% 
             autoplot(rug = TRUE, train = heart_tr) +
             ggtitle("Partial Dependence on cigarette per day (Boosting Model)")+
             labs(x = "Cigarette per day")
@@ -459,7 +463,8 @@ grid.arrange(pdp.gbm4, nrow = 1)
 pdp.gbm5 <- gbmA.fit %>% 
             partial(pred.var = "tot_chol",
                     grid.resolution = 100,
-                    prob = TRUE) %>% 
+                    prob = TRUE,
+                    which.class = "yes") %>% 
             autoplot(rug = TRUE, train = heart_tr) +
             ggtitle("Partial Dependence on Cholesterol Level (Boosting Model)") +
             labs(x = "Cholesterol Level")
@@ -469,7 +474,8 @@ grid.arrange(pdp.gbm5, nrow = 1)
 pdp.gbm6 <- gbmA.fit %>% 
             partial(pred.var = "dia_bp",
                     grid.resolution = 100,
-                    prob = TRUE) %>% 
+                    prob = TRUE,
+                    which.class = "yes") %>% 
             autoplot(rug = TRUE, train = heart_tr) +
             ggtitle("Partial Dependence on Diastolic blood pressure  (Boosting Model)") +
             labs(x = "Diastolic blood pressure ")
